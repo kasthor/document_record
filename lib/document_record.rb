@@ -71,7 +71,7 @@ module DocumentRecord
           @@_index_fields.include? attr.to_s
         end
 
-        def as_json options
+        def as_json options = {}
           read_serialized_hash_attribute(@@_document_field_name)
         end
       end  
@@ -80,6 +80,13 @@ module DocumentRecord
     def index_fields *args
       @@_index_fields = args.collect do |name| 
         raise unless column_names.include? name.to_s 
+        class_eval <<-METHOD
+          def #{name}= value
+            document do |d|
+              d["#{name}"] = value
+            end
+          end
+        METHOD
         name.to_s
       end
     end

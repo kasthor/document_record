@@ -40,6 +40,12 @@ describe SampleModel do
     s1.indexed_field.should == 'test'
   end
 
+  it "updates the document when updating an index field" do
+    s1 = SampleModel.create level1: { level2: 'level3' }, indexed_field: 'test'
+    s1.indexed_field = 'update'
+    s1.as_json["indexed_field"].should == "update"
+  end
+
   it "can be found by indexed_field" do
     s1 = SampleModel.create level1: { level2: 'level3' }, indexed_field: 'test'
     s2 = SampleModel.find_by_indexed_field 'test'
