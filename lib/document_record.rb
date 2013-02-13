@@ -70,6 +70,10 @@ module DocumentRecord
         def is_indexed? attr
           @@_index_fields.include? attr.to_s
         end
+
+        def as_json options
+          read_serialized_hash_attribute(@@_document_field_name)
+        end
       end  
     end
 

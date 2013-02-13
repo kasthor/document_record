@@ -30,6 +30,9 @@ describe SampleModel do
     it "can be saved" do
       sample.save
     end
+    it "should serialize to json from the case record" do
+      sample.to_json.should == hash.to_json
+    end
   end
 
   it "can save the indexed fields on their respective field" do
