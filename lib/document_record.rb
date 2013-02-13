@@ -1,4 +1,18 @@
 module DocumentRecord
+  class Document < Hash
+    def changed
+      @changed ||= []
+    end
+
+    def []= key, val
+      super key.to_s, val
+      changed.push key.to_s
+    end
+    def has_changed? 
+      ! changed.empty?
+    end
+  end
+
   module Base 
     extend ActiveSupport::Concern
 
@@ -7,41 +21,54 @@ module DocumentRecord
       @@_document_field_name = name
       @@_index_fields ||= []
 
-      serialize name, JSON
-
       class_eval do
         alias_method :regular_assign_attributes, :assign_attributes
         alias_method :regular_method_missing, :method_missing
 
-        def document
-          read_attribute @@_document_field_name or {}
+        def read_serialized_hash_attribute field_name
+          raw = read_attribute field_name
+          raw && JSON.load( raw ) || {}
+        end
+        
+        def write_serialized_hash_attribute field_name, hash
+          write_attribute field_name, JSON.dump(hash)
         end
 
-        def document= arg
-          write_attribute @@_document_field_name, arg
+        def document &block
+          if block
+            _document = Document[read_serialized_hash_attribute(@@_document_field_name)]
+            yield _document
+            if _document.has_changed?
+              _document.changed.each do |field| 
+                write_attribute field, _document[field] if is_indexed? field
+              end
+              write_serialized_hash_attribute @@_document_field_name, _document 
+            end
+          else
+            read_serialized_hash_attribute(@@_document_field_name).freeze
+          end
         end
 
         def assign_attributes new_attributes, options
           new_attributes.each do | key, value |
-            __send__ "#{key}=".to_sym, value
+            document do |d|
+              d[key] = value
+            end
           end
         end
 
         def method_missing method, *args
-          _document = send :document
-          if method.to_s =~ /(.*)=$/
-            _attr = $1.to_sym
-            _val = args.shift
-            _document[_attr] = _val
-            write_attribute _attr, _val if is_indexed? _attr
-            send :document=, _document
+          if method =~ /(.*)=$/ 
+            document do |d|
+              d[$1] = args.shift
+            end
           else
-            _document[method]
+            document[method.to_s]
           end
         end
 
         def is_indexed? attr
-          @@_index_fields.include? attr
+          @@_index_fields.include? attr.to_s
         end
       end  
     end
@@ -49,7 +76,7 @@ module DocumentRecord
     def index_fields *args
       @@_index_fields = args.collect do |name| 
         raise unless column_names.include? name.to_s 
-        name.to_sym
+        name.to_s
       end
     end
   end

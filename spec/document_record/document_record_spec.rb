@@ -21,11 +21,11 @@ describe SampleModel do
   end
 
   context "with an arbitrary hash" do
-    let(:hash){ { level1: {level2: 'level3'} } }
+    let(:hash){ { "level1" => {"level2" => 'level3'} } }
     let(:sample){ sample = SampleModel.new hash }
     
     it "returns the previously stored hash when requested" do
-      sample.level1 = { level2: 'level3' }
+      sample.level1.should == { "level2" => 'level3' }
     end 
     it "can be saved" do
       sample.save
@@ -33,7 +33,7 @@ describe SampleModel do
   end
 
   it "can save the indexed fields on their respective field" do
-    s1 = SampleModel.new level1: { level2: 'level3' }, indexed_field: 'test'
+    s1 = SampleModel.create level1: { level2: 'level3' }, indexed_field: 'test'
     s1.indexed_field.should == 'test'
   end
 
@@ -42,6 +42,12 @@ describe SampleModel do
     s2 = SampleModel.find_by_indexed_field 'test'
     s2.should == s1
   end
+
+  it "return any key even if it was passed as string" do
+    s1 = SampleModel.create "level1" => "level2"
+    s1.level1.should == "level2"
+  end
+
 end
 
 describe ActiveRecord::Base do
