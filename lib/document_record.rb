@@ -13,6 +13,15 @@ module DocumentRecord
     end
   end
 
+  module Serializer
+    def self.dump object
+      Base64.encode64 Marshal.dump object
+    end
+    def self.load data
+      Marshal.load Base64.decode64 data rescue nil
+    end
+  end
+
   module Base 
     extend ActiveSupport::Concern
 
@@ -27,11 +36,11 @@ module DocumentRecord
 
         def read_serialized_hash_attribute field_name
           raw = read_attribute field_name
-          raw && JSON.load( raw ) || {}
+          raw && Serializer.load( raw ) || {}
         end
         
         def write_serialized_hash_attribute field_name, hash
-          write_attribute field_name, JSON.dump(hash)
+          write_attribute field_name, Serializer.dump(hash)
         end
 
         def document &block
@@ -41,11 +50,14 @@ module DocumentRecord
             if _document.has_changed?
               _document.changed.each do |field| 
                 if is_indexed? field
-                  write_attribute field, _document[field] 
+                  #TODO: Do proper casting
                   _document[field] = case self.class.columns_hash[field].type
                     when :integer then _document[field].to_i
+                    when :datetime then _document[field]
                     else _document[field]
                   end
+
+                  write_attribute field, _document[field] 
                 end
               end
               write_serialized_hash_attribute @@_document_field_name, _document 

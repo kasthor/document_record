@@ -62,9 +62,14 @@ describe SampleModel do
     s1.number.should be_an Integer
   end
 
-  it "honors indexed field types" do
+  it "honors indexed field type integer" do
     s1 = SampleModel.create "indexed_integer" => "1"
     s1.indexed_integer.should be_an Integer
+  end
+
+  it "honors indexed field type time", focus: true do
+    s1 = SampleModel.create "indexed_date" => DateTime.now
+    s1.indexed_date.should be_a DateTime
   end
 end
 
