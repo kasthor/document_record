@@ -57,6 +57,11 @@ describe SampleModel do
     s1.level1.should == "level2"
   end
 
+  it "save integers as integers" do
+    s1 = SampleModel.create "number" => 1
+    s1.number.should be_an Integer
+  end
+
 end
 
 describe ActiveRecord::Base do
