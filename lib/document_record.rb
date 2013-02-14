@@ -1,12 +1,12 @@
 module DocumentRecord
   class Document < Hash
     def changed
-      @changed ||= []
+      @changed ||= Set.new
     end
 
     def []= key, val
       super key.to_s, val
-      changed.push key.to_s
+      changed << key.to_s
     end
     def has_changed? 
       ! changed.empty?
@@ -40,7 +40,13 @@ module DocumentRecord
             yield _document
             if _document.has_changed?
               _document.changed.each do |field| 
-                write_attribute field, _document[field] if is_indexed? field
+                if is_indexed? field
+                  write_attribute field, _document[field] 
+                  _document[field] = case self.class.columns_hash[field].type
+                    when :integer then _document[field].to_i
+                    else _document[field]
+                  end
+                end
               end
               write_serialized_hash_attribute @@_document_field_name, _document 
             end
@@ -68,26 +74,22 @@ module DocumentRecord
         end
 
         def is_indexed? attr
-          @@_index_fields.include? attr.to_s
+          self.class.column_names.include? attr.to_s
         end
 
         def as_json options = {}
           read_serialized_hash_attribute(@@_document_field_name)
         end
       end  
-    end
 
-    def index_fields *args
-      @@_index_fields = args.collect do |name| 
-        raise unless column_names.include? name.to_s 
+      column_names.each do |column|
         class_eval <<-METHOD
-          def #{name}= value
+          def #{column}= value
             document do |d|
-              d["#{name}"] = value
+              d["#{column}"] = value
             end
           end
         METHOD
-        name.to_s
       end
     end
   end

@@ -16,8 +16,9 @@ ActiveRecord::Schema.define(:version => 20130212012831) do
   create_table "sample_models", :force => true do |t|
     t.string   "object"
     t.string   "indexed_field"
-    t.datetime "created_at",    :null => false
-    t.datetime "updated_at",    :null => false
+    t.integer  "indexed_integer"
+    t.datetime "created_at",      :null => false
+    t.datetime "updated_at",      :null => false
   end
 
 end

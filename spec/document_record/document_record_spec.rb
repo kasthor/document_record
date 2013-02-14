@@ -62,11 +62,14 @@ describe SampleModel do
     s1.number.should be_an Integer
   end
 
+  it "honors indexed field types" do
+    s1 = SampleModel.create "indexed_integer" => "1"
+    s1.indexed_integer.should be_an Integer
+  end
 end
 
 describe ActiveRecord::Base do
   it { ActiveRecord::Base.should respond_to :document_field }
-  it { ActiveRecord::Base.should respond_to :index_fields }
 
   describe '#document_field' do
     it "should show an error if the field doesn't exist" do
@@ -75,17 +78,6 @@ describe ActiveRecord::Base do
       }.to raise_error
       expect {
         SampleModel.class_eval { document_field :object }
-      }.to_not raise_error
-    end
-  end
-
-  describe '#index_fields' do
-    it "should show an error if the field doesn't exist" do
-      expect {
-        SampleModel.class_eval { index_fields :non_existent }
-      }.to raise_error
-      expect {
-        SampleModel.class_eval { index_fields :indexed_field }
       }.to_not raise_error
     end
   end
