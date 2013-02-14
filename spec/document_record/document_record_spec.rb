@@ -67,9 +67,15 @@ describe SampleModel do
     s1.indexed_integer.should be_an Integer
   end
 
-  it "honors indexed field type time", focus: true do
+  it "honors indexed field type time" do
     s1 = SampleModel.create "indexed_date" => DateTime.now
-    s1.indexed_date.should be_a DateTime
+    s1.indexed_date.should be_an ActiveSupport::TimeWithZone
+  end
+
+  it "reports that indexed fields have been changed" do
+    s1 = SampleModel.create "indexed_field" => "test"
+    s1.indexed_field = "change"
+    s1.indexed_field_changed?.should be_true
   end
 end
 

@@ -53,7 +53,6 @@ module DocumentRecord
                   #TODO: Do proper casting
                   _document[field] = case self.class.columns_hash[field].type
                     when :integer then _document[field].to_i
-                    when :datetime then _document[field]
                     else _document[field]
                   end
 
