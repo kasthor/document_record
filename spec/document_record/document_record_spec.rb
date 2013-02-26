@@ -3,7 +3,6 @@ describe SampleModel do
     SampleModel.should be < ActiveRecord::Base
   end
 
-
   context "with an arbitrary set of attributes" do
     let(:arbitrary_attributes){ { arbitrary_attribute: 'test' } }
     let(:sample){ SampleModel.new arbitrary_attributes }
@@ -29,9 +28,6 @@ describe SampleModel do
     end 
     it "can be saved" do
       sample.save
-    end
-    it "should serialize to json from the case record" do
-      sample.to_json.should == hash.to_json
     end
   end
 
@@ -76,6 +72,16 @@ describe SampleModel do
     s1 = SampleModel.create "indexed_field" => "test"
     s1.indexed_field = "change"
     s1.indexed_field_changed?.should be_true
+  end
+
+  it "includes attributes in the json" do
+    s1 = SampleModel.create "test" => "test"
+    s1.as_json.should have_key "created_at"
+  end
+
+  it "doesn't include the document field" do
+    s1 = SampleModel.create "test" => "test"
+    s1.as_json.should_not have_key "object"
   end
 end
 
