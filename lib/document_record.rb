@@ -26,7 +26,7 @@ module DocumentRecord
     extend ActiveSupport::Concern
 
     def document_field name
-      raise unless column_names.include? name.to_s
+      raise "Field must exist in record in order to become a document field" unless column_names.include? name.to_s
       @@_document_field_name = name
       @@_index_fields ||= []
 
