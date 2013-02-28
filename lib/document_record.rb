@@ -89,7 +89,7 @@ module DocumentRecord
         end
 
         def as_json options = {}
-          ( read_serialized_hash_attribute(@@_document_field_name) || {} ).merge attributes.reject{ |k, v| k === @@_document_field_name.to_s }
+          ( read_serialized_hash_attribute(@@_document_field_name) || {} ).merge(super.reject{ |k, v| k === @@_document_field_name.to_s })
         end
       end  
 
