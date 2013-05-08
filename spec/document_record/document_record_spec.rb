@@ -83,6 +83,11 @@ describe SampleModel do
     s1 = SampleModel.create "test" => "test"
     s1.as_json.should_not have_key "object"
   end
+
+  it "includes methods if passed thru options" do
+    s1 = SampleModel.create "test" => "test"
+    s1.as_json( methods: [ :json_method ] ).should have_key :json_method
+  end
 end
 
 describe ActiveRecord::Base do
