@@ -15,6 +15,7 @@ ActiveRecord::Schema.define(:version => 20130212012831) do
 
   create_table "sample_models", :force => true do |t|
     t.string   "object"
+    t.string   "inner_attribute"
     t.string   "indexed_field"
     t.datetime "indexed_date"
     t.integer  "indexed_integer"

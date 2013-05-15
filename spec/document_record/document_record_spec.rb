@@ -21,7 +21,7 @@ describe SampleModel do
 
   context "with an arbitrary hash" do
     let(:hash){ { "level1" => {"level2" => 'level3'} } }
-    let(:sample){ sample = SampleModel.new hash }
+    let(:sample){ SampleModel.new hash }
     
     it "returns the previously stored hash when requested" do
       sample.level1.should == { "level2" => 'level3' }
@@ -29,6 +29,27 @@ describe SampleModel do
     it "can be saved" do
       sample.save
     end
+  end
+
+  context "with an arbitrary inner attribute" do
+    let(:hash) { { "inner" => { "attribute" => "value" }}}
+
+    it "recognizes inner_attribute as an indexed field" do
+      sample = SampleModel.new hash
+      sample.is_indexed?(:inner_attribute).should be_true
+      
+    end
+
+    it "should write the value to an attribute" do
+      sample = SampleModel.new hash
+      sample.attributes["inner_attribute"].should == "value"
+    end
+
+    it "would have the inner attribute accessible" do
+      sample = SampleModel.new hash
+      sample.inner_attribute.should == "value"
+    end
+
   end
 
   it "can save the indexed fields on their respective field" do
@@ -88,6 +109,7 @@ describe SampleModel do
     s1 = SampleModel.create "test" => "test"
     s1.as_json( methods: [ :json_method ] ).should have_key :json_method
   end
+
 end
 
 describe ActiveRecord::Base do

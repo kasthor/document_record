@@ -46,18 +46,31 @@ module DocumentRecord
         def document &block
           if block
             _document = Document[read_serialized_hash_attribute(@@_document_field_name)]
+
+            process_indexed_value = lambda do | hash, key, field |
+              #TODO: Do proper casting
+              hash[key] = case self.class.columns_hash[field].type
+                when :integer then hash[key].to_i
+                else hash[key]
+              end
+
+              write_attribute field, hash[key] 
+            end
+
             yield _document
             if _document.has_changed?
               _document.changed.each do |field| 
-                if is_indexed? field
-                  #TODO: Do proper casting
-                  _document[field] = case self.class.columns_hash[field].type
-                    when :integer then _document[field].to_i
-                    else _document[field]
-                  end
+                if _document[field].is_a? Hash
+                  prefix = "#{field}_"
 
-                  write_attribute field, _document[field] 
+                  _document[field].each do |key, value|
+                    name = "#{prefix}#{key}"
+
+                    process_indexed_value.call _document[field], key, name if is_indexed? name
+                  end
                 end
+
+                process_indexed_value.call _document, field, field if is_indexed? field
               end
               write_serialized_hash_attribute @@_document_field_name, _document 
             end
