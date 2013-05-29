@@ -1,3 +1,4 @@
+
 describe SampleModel do
   it "includes Active Record Base" do
     SampleModel.should be < ActiveRecord::Base
@@ -40,7 +41,7 @@ describe SampleModel do
       
     end
 
-    it "should write the value to an attribute" do
+    it "should write the value to an attribute", focus: true do
       sample = SampleModel.new hash
       sample.attributes["inner_attribute"].should == "value"
     end
@@ -48,6 +49,13 @@ describe SampleModel do
     it "would have the inner attribute accessible" do
       sample = SampleModel.new hash
       sample.inner_attribute.should == "value"
+    end
+
+    it "changes the inner attribute indexed field when changing the attribute" do
+      pending
+      sample = SampleModel.new hash
+      sample.inner["attribute"] = "testing"
+      sample.inner_attribute.should == "testing"
     end
 
   end

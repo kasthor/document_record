@@ -1,18 +1,6 @@
+require 'document_hash'
+
 module DocumentRecord
-  class Document < Hash
-    def changed
-      @changed ||= Set.new
-    end
-
-    def []= key, val
-      super key.to_s, val
-      changed << key.to_s
-    end
-    def has_changed? 
-      ! changed.empty?
-    end
-  end
-
   module Serializer
     def self.dump object
       Base64.encode64 Marshal.dump object
@@ -33,6 +21,7 @@ module DocumentRecord
       class_eval do
         alias_method :regular_assign_attributes, :assign_attributes
         alias_method :regular_method_missing, :method_missing
+        alias_method :regular_save, :save
 
         def read_serialized_hash_attribute field_name
           raw = read_attribute field_name
@@ -43,55 +32,48 @@ module DocumentRecord
           write_attribute field_name, Serializer.dump(hash)
         end
 
-        def document &block
-          if block
-            _document = Document[read_serialized_hash_attribute(@@_document_field_name)]
+        def document
+          @document ||= new_document
+        end
 
-            process_indexed_value = lambda do | hash, key, field |
-              #TODO: Do proper casting
-              hash[key] = case self.class.columns_hash[field].type
-                when :integer then hash[key].to_i
-                else hash[key]
-              end
+        def new_document
+          d = ::DocumentHash::Core[read_serialized_hash_attribute(@@_document_field_name)]
 
-              write_attribute field, hash[key] 
-            end
+          d.before_change do |path, value|
+            p path
+            key = path.join "_"
 
-            yield _document
-            if _document.has_changed?
-              _document.changed.each do |field| 
-                if _document[field].is_a? Hash
-                  prefix = "#{field}_"
+            value = case self.class.columns_hash[field].type
+              when :integer then value.to_i
+              else value
+            end if self.class.columns_hash[field]
 
-                  _document[field].each do |key, value|
-                    name = "#{prefix}#{key}"
-
-                    process_indexed_value.call _document[field], key, name if is_indexed? name
-                  end
-                end
-
-                process_indexed_value.call _document, field, field if is_indexed? field
-              end
-              write_serialized_hash_attribute @@_document_field_name, _document 
-            end
-          else
-            read_serialized_hash_attribute(@@_document_field_name).freeze
+            value
           end
+          d.after_change do |path, value|
+            key = path.join "_"
+            write_attribute key, value if self.class.columns_hash[key]
+          end
+
+          d
+        end
+
+        def save *arguments
+          save_document
+          regular_save *arguments
+        end
+
+        def save_document
+          write_serialized_hash_attribute @@_document_field_name, document 
         end
 
         def assign_attributes new_attributes, options
-          new_attributes.each do | key, value |
-            document do |d|
-              d[key] = value
-            end
-          end
+          document.merge! new_attributes
         end
 
         def method_missing method, *args
           if method =~ /(.*)=$/ 
-            document do |d|
-              d[$1] = args.shift
-            end
+            document[$1] = args.shift
           else
             document[method.to_s]
           end
@@ -108,10 +90,12 @@ module DocumentRecord
 
       column_names.each do |column|
         class_eval <<-METHOD
+          @@counter = 0
+          def #{column}
+            document["#{column}"]
+          end
           def #{column}= value
-            document do |d|
-              d["#{column}"] = value
-            end
+            document["#{column}"] = value
           end
         METHOD
       end
