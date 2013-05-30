@@ -33,29 +33,22 @@ module DocumentRecord
         end
 
         def document
-          @document ||= new_document
-        end
+          @document ||= ::DocumentHash::Core[read_serialized_hash_attribute(@@_document_field_name)].tap do |d|
+            d.before_change do |path, value|
+              key = path.join "_"
+              
+              value = case self.class.columns_hash[key].type
+                when :integer then value.to_i
+                else value
+              end if self.class.columns_hash[key]
 
-        def new_document
-          d = ::DocumentHash::Core[read_serialized_hash_attribute(@@_document_field_name)]
-
-          d.before_change do |path, value|
-            p path
-            key = path.join "_"
-
-            value = case self.class.columns_hash[field].type
-              when :integer then value.to_i
-              else value
-            end if self.class.columns_hash[field]
-
-            value
+              value
+            end
+            d.after_change do |path, value|
+              key = path.join "_"
+              write_attribute key, value if self.class.columns_hash[key]
+            end
           end
-          d.after_change do |path, value|
-            key = path.join "_"
-            write_attribute key, value if self.class.columns_hash[key]
-          end
-
-          d
         end
 
         def save *arguments
@@ -64,7 +57,7 @@ module DocumentRecord
         end
 
         def save_document
-          write_serialized_hash_attribute @@_document_field_name, document 
+          write_serialized_hash_attribute @@_document_field_name, document.to_hash
         end
 
         def assign_attributes new_attributes, options
@@ -90,9 +83,8 @@ module DocumentRecord
 
       column_names.each do |column|
         class_eval <<-METHOD
-          @@counter = 0
           def #{column}
-            document["#{column}"]
+            document["#{column}"] || read_attribute("#{column}")
           end
           def #{column}= value
             document["#{column}"] = value

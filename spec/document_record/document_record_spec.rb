@@ -1,4 +1,3 @@
-
 describe SampleModel do
   it "includes Active Record Base" do
     SampleModel.should be < ActiveRecord::Base
@@ -25,7 +24,7 @@ describe SampleModel do
     let(:sample){ SampleModel.new hash }
     
     it "returns the previously stored hash when requested" do
-      sample.level1.should == { "level2" => 'level3' }
+      sample.level1.should == { :level2 => 'level3' }
     end 
     it "can be saved" do
       sample.save
@@ -41,7 +40,7 @@ describe SampleModel do
       
     end
 
-    it "should write the value to an attribute", focus: true do
+    it "should write the value to an attribute" do
       sample = SampleModel.new hash
       sample.attributes["inner_attribute"].should == "value"
     end
@@ -52,7 +51,6 @@ describe SampleModel do
     end
 
     it "changes the inner attribute indexed field when changing the attribute" do
-      pending
       sample = SampleModel.new hash
       sample.inner["attribute"] = "testing"
       sample.inner_attribute.should == "testing"
@@ -94,7 +92,7 @@ describe SampleModel do
 
   it "honors indexed field type time" do
     s1 = SampleModel.create "indexed_date" => DateTime.now
-    s1.indexed_date.should be_an ActiveSupport::TimeWithZone
+    s1.indexed_date.should be_an DateTime
   end
 
   it "reports that indexed fields have been changed" do
