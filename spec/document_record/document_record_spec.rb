@@ -95,6 +95,11 @@ describe SampleModel do
     s1.indexed_date.should be_an DateTime
   end
 
+  it "forces indexed values to their types" do
+    s1 = SampleModel.create "indexed_date" => "2009-04-12T20:44:55"
+    s1.attributes["indexed_date"].should be_a_kind_of ActiveSupport::TimeWithZone
+  end
+
   it "reports that indexed fields have been changed" do
     s1 = SampleModel.create "indexed_field" => "test"
     s1.indexed_field = "change"

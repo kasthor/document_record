@@ -61,7 +61,9 @@ module DocumentRecord
         end
 
         def assign_attributes new_attributes, options
-          document.merge! new_attributes
+          new_attributes.each do | key, value |
+            self.send "#{key}=".to_sym, value
+          end 
         end
 
         def method_missing method, *args
