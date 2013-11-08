@@ -60,6 +60,11 @@ module DocumentRecord
           save(*arguments) || raise(RecordNotSaved)
         end
 
+        def touch!
+          document.touch!
+          save
+        end
+
         def save_document
           write_serialized_hash_attribute @@_document_field_name, document.to_hash
         end
