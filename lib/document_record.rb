@@ -56,6 +56,10 @@ module DocumentRecord
           regular_save *arguments
         end
 
+        def save! *arguments
+          save(*arguments) || raise(RecordNotSaved)
+        end
+
         def save_document
           write_serialized_hash_attribute @@_document_field_name, document.to_hash
         end
