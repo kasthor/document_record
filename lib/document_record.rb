@@ -61,7 +61,7 @@ module DocumentRecord
         end
 
         def touch!
-          document.touch!
+          self.document.touch!
           save
         end
 
