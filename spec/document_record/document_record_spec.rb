@@ -33,27 +33,29 @@ describe SampleModel do
 
   context "with an arbitrary inner attribute" do
     let(:hash) { { "inner" => { "attribute" => "value" }}}
+    let(:sample){ SampleModel.new hash }
 
     it "recognizes inner_attribute as an indexed field" do
-      sample = SampleModel.new hash
       sample.is_indexed?(:inner_attribute).should be_true
       
     end
 
     it "should write the value to an attribute" do
-      sample = SampleModel.new hash
       sample.attributes["inner_attribute"].should == "value"
     end
 
     it "would have the inner attribute accessible" do
-      sample = SampleModel.new hash
       sample.inner_attribute.should == "value"
     end
 
     it "changes the inner attribute indexed field when changing the attribute" do
-      sample = SampleModel.new hash
       sample.inner["attribute"] = "testing"
       sample.inner_attribute.should == "testing"
+    end
+
+    it "changes an inner attribute when changing the property" do
+      sample.inner.attribute = "new"
+      sample.inner["attribute"].should == "new"
     end
 
   end
