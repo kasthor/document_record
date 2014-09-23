@@ -31,6 +31,15 @@ describe SampleModel do
     end
   end
 
+  context "with a hash with multiple items" do
+    let(:hash){{ one: {two: :three}, single: :test }}
+    let(:sample) { SampleModel.new hash }
+    
+    it "finds all the hash keys" do
+      expect( sample.deep_keys ).to match_array ["one_two", "single"]
+    end
+  end
+
   context "with an arbitrary inner attribute" do
     let(:hash) { { "inner" => { "attribute" => "value" }}}
     let(:sample){ SampleModel.new hash }

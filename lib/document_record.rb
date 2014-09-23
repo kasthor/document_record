@@ -13,9 +13,15 @@ module DocumentRecord
   module Base 
     extend ActiveSupport::Concern
 
+    def schema_fields *fields
+      @@_included_fields ||= []
+      @@_included_fields += fields
+    end
+
     def document_field name
       raise "Field must exist in record in order to become a document field" unless column_names.include? name.to_s
       @@_document_field_name = name
+      @@_included_fields ||= []
       @@_index_fields ||= []
 
       class_eval do
@@ -88,7 +94,24 @@ module DocumentRecord
         end
 
         def as_json options = {}
-          ( read_serialized_hash_attribute(@@_document_field_name) || {} ).merge(super.reject{ |k, v| k === @@_document_field_name.to_s })
+          ( read_serialized_hash_attribute(@@_document_field_name) || {} ).merge(super.select{ |k, v| @@_included_fields.include?( k ) } )
+        end
+
+        def deep_keys hash = nil, path = []
+          hash = document.to_hash unless hash
+          result = []
+
+          hash.each do | k, v |
+            current = path.dup
+            
+            current << k
+            if v.is_a? Hash
+              result += deep_keys hash[ k ], current 
+            else
+              result << current.join("_")
+            end
+          end
+          result
         end
       end  
 
