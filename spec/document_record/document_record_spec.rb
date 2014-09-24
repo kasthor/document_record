@@ -10,10 +10,12 @@ describe SampleModel do
     it "should allow access the previously set attributes thru direct methods" do
       sample.arbitrary_attribute.should == 'test'
     end
+
     it "should allow assignments thru direct methods" do
       sample.arbitrary_attribute = 'reassign'
       sample.arbitrary_attribute.should == 'reassign'
     end
+
     it "can be saved" do
       sample.save
     end
@@ -119,7 +121,7 @@ describe SampleModel do
 
   it "includes attributes in the json" do
     s1 = SampleModel.create "test" => "test"
-    s1.as_json.should have_key "created_at"
+    s1.as_json.should have_key :created_at
   end
 
   it "doesn't include the document field" do

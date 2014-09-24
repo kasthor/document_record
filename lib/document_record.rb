@@ -77,7 +77,9 @@ module DocumentRecord
 
         def assign_attributes new_attributes, options
           new_attributes.each do | key, value |
-            self.send "#{key}=".to_sym, value
+            assign_key = :"#{key}="
+            method_missing assign_key, value
+            self.send assign_key, value if self.respond_to? assign_key
           end 
         end
 
@@ -94,7 +96,18 @@ module DocumentRecord
         end
 
         def as_json options = {}
-          ( read_serialized_hash_attribute(@@_document_field_name) || {} ).merge(super.select{ |k, v| @@_included_fields.include?( k ) } )
+          document.
+            merge(super.select{ |k, v| @@_included_fields.include?( k.to_sym ) } ).
+            merge(method_values(options))
+        end
+
+        def method_values options
+          {}.tap do | result | 
+            return result unless options[:methods].is_a? Array
+            options[:methods].each do | method |
+              result[method] = self.__send__(method)
+            end
+          end
         end
 
         def deep_keys hash = nil, path = []
