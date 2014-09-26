@@ -110,7 +110,8 @@ module DocumentRecord
           end
         end
 
-        def deep_keys hash = nil, path = []
+
+        def _deep_key_values hash = nil, path = []
           hash = document.to_hash unless hash
           result = []
 
@@ -119,12 +120,20 @@ module DocumentRecord
             
             current << k
             if v.is_a? Hash
-              result += deep_keys hash[ k ], current 
+              result += _deep_key_values hash[ k ], current 
             else
-              result << current.join("_")
+              result += [ current.join("_"), v ]
             end
           end
           result
+        end
+
+        def deep_key_values
+          Hash[*_deep_key_values]
+        end
+
+        def deep_keys
+          deep_key_values.keys
         end
       end  
 
