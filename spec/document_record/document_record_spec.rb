@@ -104,7 +104,7 @@ describe SampleModel do
   end
 
   it "honors indexed field type time" do
-    s1 = SampleModel.create "indexed_date" => DateTime.now
+    s1 = SampleModel.create "indexed_date" => DateTime.new
     s1.indexed_date.should be_an DateTime
   end
 

@@ -1,12 +1,51 @@
 require 'document_hash'
+require 'BSON'
+require 'ruby-debug'
 
 module DocumentRecord
   module Serializer
-    def self.dump object
-      Base64.encode64 Marshal.dump object
+    MARSHALL_VERSION = 0
+    MESSAGEPACK_VERSION = 1
+    DEFAULT_VERSION = 1
+
+    def self.dump object, options = {}
+      version = DEFAULT_VERSION
+      version = options[:force_version] if options.has_key? :force_version
+
+      binary_dump = 
+        case version 
+          when 0 then 
+            Marshal.dump object
+          when 1 then
+            object.to_hash.to_bson
+          else 
+            raise "No serialization version found: #{ version }"
+        end
+
+      unless options.has_key? :no_version and options[:no_version]
+        stamp = [68, 82, version].pack 'c2S'  # DR<version> In 4 bits
+        binary_dump.insert( 0, stamp )
+      end
+
+      Base64.encode64 binary_dump
     end
     def self.load data
-      Marshal.load Base64.decode64 data rescue nil
+      decoded = Base64.decode64 data rescue nil
+      version = 0
+
+      if decoded.start_with? "DR"  # Has version Stamp
+        version = decoded[2,2].unpack('S').pop # Gets the Version
+        decoded[0...4] = '' # Removes version stamp
+      end
+      
+      case version
+        when 0 then
+          Marshal.load decoded rescue nil
+        when 1 then
+          Hash.from_bson( StringIO.new( decoded ) )
+        else 
+          raise "Unrecognized version #{version}"
+      end
     end
   end
 

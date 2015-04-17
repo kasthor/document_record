@@ -17,6 +17,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency "document_hash", "~> 0.0.14"
   s.add_dependency "rails", "~> 3.2.11"
+  s.add_dependency "bson", "~> 3.0.1"
 
   s.add_development_dependency "sqlite3"
   s.add_development_dependency "rspec-rails"
