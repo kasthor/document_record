@@ -1,6 +1,5 @@
 require 'document_hash'
-require 'BSON'
-require 'ruby-debug'
+require 'bson'
 
 module DocumentRecord
   module Serializer
