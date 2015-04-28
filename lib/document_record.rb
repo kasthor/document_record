@@ -13,21 +13,16 @@ module DocumentRecord
   module Base 
     extend ActiveSupport::Concern
 
-    def schema_fields *fields
-      @@_included_fields ||= []
-      @@_included_fields += fields
-    end
-
-    def document_field name
+    def document_field name, options = {}
       raise "Field must exist in record in order to become a document field" unless column_names.include? name.to_s
-      @@_document_field_name = name
-      @@_included_fields ||= []
-      @@_index_fields ||= []
-
       class_eval do
         alias_method :regular_assign_attributes, :assign_attributes
         alias_method :regular_method_missing, :method_missing
         alias_method :regular_save, :save
+
+        @@_document_field_name = name
+        @@_schema_fields = options[:schema_fields] || []
+        @@_index_fields ||= []
 
         def read_serialized_hash_attribute field_name
           raw = read_attribute field_name
@@ -85,9 +80,29 @@ module DocumentRecord
 
         def method_missing method, *args
           if method =~ /(.*)=$/ 
-            document[$1] = args.shift
+            write_document $1, args.shift
           else
-            document[method.to_s]
+            read_document method.to_s
+          end
+        end
+
+        def is_schema_field? attribute
+          @@_schema_fields.include? attribute.to_sym
+        end
+
+        def read_document attribute
+          if is_schema_field? attribute
+            read_attribute attribute
+          else
+            document[attribute] || read_attribute(attribute)
+          end
+        end
+
+        def write_document attribute, value
+          if is_schema_field? attribute
+            write_attribute attribute, value
+          else
+            document[attribute] = value
           end
         end
 
@@ -96,9 +111,13 @@ module DocumentRecord
         end
 
         def as_json options = {}
-          document.
-            merge(super.select{ |k, v| @@_included_fields.include?( k.to_sym ) } ).
-            merge(method_values(options))
+          included_fields = super.select{ |k, v|
+            @@_schema_fields.include?( k.to_sym ) 
+          }.stringify_keys!
+
+          document.to_hash( stringify_keys: true ).
+            merge( included_fields ).
+            merge( method_values(options) )
         end
 
         def method_values options
@@ -135,15 +154,18 @@ module DocumentRecord
         def deep_keys
           deep_key_values.keys
         end
-      end  
+      end
 
       column_names.each do |column|
         class_eval <<-METHOD
           def #{column}
-            document["#{column}"] || read_attribute("#{column}")
+            # document["#{column}"] || read_attribute("#{column}")
+            read_document "#{ column }"
           end
+
           def #{column}= value
-            document["#{column}"] = value
+            # document["#{column}"] = value
+            write_document "#{ column }", value
           end
         METHOD
       end
