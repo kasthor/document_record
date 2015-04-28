@@ -85,7 +85,7 @@ describe SampleModel do
   it "can be found by indexed_field" do
     s1 = SampleModel.create level1: { level2: 'level3' }, indexed_field: 'test'
     s2 = SampleModel.find_by_indexed_field 'test'
-    s2.should == s1
+    expect( s2 ).to eq( s1 )
   end
 
   it "return any key even if it was passed as string" do
@@ -121,7 +121,27 @@ describe SampleModel do
 
   it "includes attributes in the json" do
     s1 = SampleModel.create "test" => "test"
-    s1.as_json.should have_key :created_at
+    s1.as_json.should have_key "created_at"
+  end
+
+  it "respond to column function" do
+    s1 = SampleModel.create "created_at" => 3.days.ago
+
+    expect( s1 ).to respond_to( :created_at )
+  end
+
+  it "the schema field should come from the indexed info" do 
+    s1 = SampleModel.create "created_at" => 3.days.ago
+    s1.update_column( "created_at", 1.day.ago )
+
+    expect( s1.created_at ).to eq( s1.read_attribute( :created_at ) )
+  end
+
+  it "the schema field should come from the indexed info and reflect in the json" do 
+    s1 = SampleModel.create "created_at" => 3.days.ago
+    s1.update_column( "created_at", 1.day.ago )
+
+    expect( s1.as_json["created_at"] ).to eq( s1.read_attribute( :created_at ) )
   end
 
   it "doesn't include the document field" do
@@ -144,6 +164,7 @@ describe ActiveRecord::Base do
       expect {
         SampleModel.class_eval { document_field :non_existent }
       }.to raise_error
+
       expect {
         SampleModel.class_eval { document_field :object }
       }.to_not raise_error
