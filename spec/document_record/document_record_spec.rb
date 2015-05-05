@@ -113,6 +113,13 @@ describe SampleModel do
     s1.attributes["indexed_date"].should be_a_kind_of ActiveSupport::TimeWithZone
   end
 
+  it "recognizes the specified timezones", focus: true do
+    date = "2009-04-12T20:44:55+0400"
+    s1 = SampleModel.create "indexed_date" => date
+    s1.reload
+    expect( DateTime.parse( s1.indexed_date ) ).to eq(DateTime.parse(date))
+  end
+
   it "reports that indexed fields have been changed" do
     s1 = SampleModel.create "indexed_field" => "test"
     s1.indexed_field = "change"
