@@ -8,12 +8,12 @@ describe SampleModel do
     let(:sample){ SampleModel.new arbitrary_attributes }
 
     it "should allow access the previously set attributes thru direct methods" do
-      sample.arbitrary_attribute.should == 'test'
+      expect( sample.arbitrary_attribute ).to eq 'test'
     end
 
     it "should allow assignments thru direct methods" do
       sample.arbitrary_attribute = 'reassign'
-      sample.arbitrary_attribute.should == 'reassign'
+      expect( sample.arbitrary_attribute ).to eq 'reassign'
     end
 
     it "can be saved" do
@@ -26,7 +26,7 @@ describe SampleModel do
     let(:sample){ SampleModel.new hash }
     
     it "returns the previously stored hash when requested" do
-      sample.level1.should == { :level2 => 'level3' }
+      expect( sample.level1 ).to eq :level2 => 'level3'
     end 
     it "can be saved" do
       sample.save
@@ -47,33 +47,32 @@ describe SampleModel do
     let(:sample){ SampleModel.new hash }
 
     it "recognizes inner_attribute as an indexed field" do
-      sample.is_indexed?(:inner_attribute).should be_true
-      
+      expect( sample.is_indexed?(:inner_attribute) ).to eq true
     end
 
     it "should write the value to an attribute" do
-      sample.attributes["inner_attribute"].should == "value"
+      expect( sample.attributes["inner_attribute"] ).to eq "value"
     end
 
     it "would have the inner attribute accessible" do
-      sample.inner_attribute.should == "value"
+      expect( sample.inner_attribute ).to eq "value"
     end
 
     it "changes the inner attribute indexed field when changing the attribute" do
       sample.inner["attribute"] = "testing"
-      sample.inner_attribute.should == "testing"
+      expect( sample.inner_attribute.should ).to eq "testing"
     end
 
     it "changes an inner attribute when changing the property" do
       sample.inner.attribute = "new"
-      sample.inner["attribute"].should == "new"
+      expect( sample.inner["attribute"] ).to eq "new"
     end
 
   end
 
   it "can save the indexed fields on their respective field" do
     s1 = SampleModel.create level1: { level2: 'level3' }, indexed_field: 'test'
-    s1.indexed_field.should == 'test'
+    expect( s1.indexed_field ).to eq 'test'
   end
 
   it "updates the document when updating an index field" do
@@ -113,7 +112,7 @@ describe SampleModel do
     s1.attributes["indexed_date"].should be_a_kind_of ActiveSupport::TimeWithZone
   end
 
-  it "recognizes the specified timezones", focus: true do
+  it "recognizes the specified timezones" do
     date = "2009-04-12T20:44:55+0400"
     s1 = SampleModel.create "indexed_date" => date
     s1.reload
@@ -123,7 +122,7 @@ describe SampleModel do
   it "reports that indexed fields have been changed" do
     s1 = SampleModel.create "indexed_field" => "test"
     s1.indexed_field = "change"
-    s1.indexed_field_changed?.should be_true
+    expect( s1.indexed_field_changed? ).to be true
   end
 
   it "includes attributes in the json" do

@@ -108,7 +108,7 @@ module DocumentRecord
           write_serialized_hash_attribute @@_document_field_name, document.to_hash
         end
 
-        def assign_attributes new_attributes, options
+        def assign_attributes new_attributes, options = {}
           new_attributes.each do | key, value |
             assign_key = :"#{key}="
             method_missing assign_key, value
