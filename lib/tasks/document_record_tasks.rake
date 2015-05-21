@@ -2,3 +2,5 @@
 # task :document_record do
 #   # Task goes here
 # end
+
+task default: [:spec]
