@@ -1,6 +1,0 @@
-{<img src="https://coveralls.io/repos/kasthor/hash_conditions/badge.svg?branch=master" alt="Coverage Status" />}[https://coveralls.io/r/kasthor/hash_conditions?branch=master]
-
-
-= DocumentRecord
-
-This project rocks and uses MIT-LICENSE.
