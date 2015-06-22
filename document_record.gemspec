@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.summary     = "Uses an Active Record as a schema-less document"
   s.description = "Uses an Active Record as a schema-less document"
 
-  s.files = Dir["{app,config,db,lib}/**/*"] + ["MIT-LICENSE", "Rakefile", "README.rdoc"]
+  s.files = Dir["{app,config,db,lib}/**/*"] + ["MIT-LICENSE", "Rakefile", "README.md"]
 
   s.add_dependency "document_hash", "~> 0.0.16"
   s.add_dependency "rails", "~> 4.2.1"
