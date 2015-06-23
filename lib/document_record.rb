@@ -57,7 +57,7 @@ module DocumentRecord
         alias_method :regular_assign_attributes, :assign_attributes
         alias_method :regular_method_missing, :method_missing
         alias_method :regular_save, :save
-        self.singleton_class.send :alias_method, :regular_find, :find
+        # self.singleton_class.send :alias_method, :regular_find, :find
 
 
         @@_document_field_name = name
@@ -70,16 +70,14 @@ module DocumentRecord
 
         default_scope { select( @@_select_fields ) }
 
-        def self.find *args
-          options = args.extract_options!
-          fields = []
-          fields << @@_document_field_name
-          fields += @@_schema_fields
-          options = {select: fields}.merge options
-          args << options
+        # def self.find *args
+        #   p args
+        #   options = args.extract_options!
+        #   options = {select: @@_select_fields}.merge options
+        #   args << options
 
-          self.regular_find *args
-        end
+        #   self.regular_find *args
+        # end
 
         def read_serialized_hash_attribute field_name
           raw = read_attribute field_name
