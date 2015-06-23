@@ -168,10 +168,6 @@ describe ActiveRecord::Base do
   describe '#document_field' do
     it "should show an error if the field doesn't exist" do
       expect {
-        SampleModel.class_eval { document_field :non_existent }
-      }.to raise_error
-
-      expect {
         SampleModel.class_eval { document_field :object }
       }.to_not raise_error
     end
