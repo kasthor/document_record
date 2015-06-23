@@ -3,6 +3,23 @@ describe SampleModel do
     SampleModel.should be < ActiveRecord::Base
   end
 
+  context "select only the main document when find" do
+    before do
+      SampleModel.create indexed_field: "test"
+    end
+    it "should do the regular find with the restricted fields" do
+      expect( SampleModel ).to receive( :regular_find ).with(:all, { select: [ :object, :created_at, :updated_at ] } )
+
+      SampleModel.find(:all)
+    end
+    it "should do the regular find with the restricted fields" do
+      query = SampleModel.where( indexed_field: "test" ).to_sql
+      expect( query ).to include("object")
+      expect( query ).to include("created_at")
+      expect( query ).to include("updated_at")
+    end
+  end
+
   context "with an arbitrary set of attributes" do
     let(:arbitrary_attributes){ { arbitrary_attribute: 'test' } }
     let(:sample){ SampleModel.new arbitrary_attributes }
@@ -47,7 +64,7 @@ describe SampleModel do
     let(:sample){ SampleModel.new hash }
 
     it "recognizes inner_attribute as an indexed field" do
-      sample.is_indexed?(:inner_attribute).should be_true
+      sample.is_indexed?(:inner_attribute).should be true
       
     end
 
@@ -116,7 +133,7 @@ describe SampleModel do
   it "reports that indexed fields have been changed" do
     s1 = SampleModel.create "indexed_field" => "test"
     s1.indexed_field = "change"
-    s1.indexed_field_changed?.should be_true
+    s1.indexed_field_changed?.should be true
   end
 
   it "includes attributes in the json" do
@@ -161,13 +178,9 @@ describe ActiveRecord::Base do
 
   describe '#document_field' do
     it "should show an error if the field doesn't exist" do
-      expect {
+       expect {
         SampleModel.class_eval { document_field :non_existent }
       }.to raise_error
-
-      expect {
-        SampleModel.class_eval { document_field :object }
-      }.to_not raise_error
     end
   end
 end

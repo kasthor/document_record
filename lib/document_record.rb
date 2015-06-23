@@ -10,7 +10,7 @@ module DocumentRecord
     end
   end
 
-  module Base 
+  module Base
     extend ActiveSupport::Concern
 
     def document_field name, options = {}
@@ -19,16 +19,35 @@ module DocumentRecord
         alias_method :regular_assign_attributes, :assign_attributes
         alias_method :regular_method_missing, :method_missing
         alias_method :regular_save, :save
+        self.singleton_class.send :alias_method, :regular_find, :find
+
 
         @@_document_field_name = name
         @@_schema_fields = options[:schema_fields] || []
         @@_index_fields ||= []
 
+        @@_select_fields = [ :id ]
+        @@_select_fields << @@_document_field_name
+        @@_select_fields += @@_schema_fields
+
+        default_scope select: @@_select_fields
+
+        def self.find *args
+          options = args.extract_options!
+          fields = []
+          fields << @@_document_field_name
+          fields += @@_schema_fields
+          options = {select: fields}.merge options
+          args << options
+
+          self.regular_find *args
+        end
+
         def read_serialized_hash_attribute field_name
           raw = read_attribute field_name
           raw && Serializer.load( raw ) || {}
         end
-        
+
         def write_serialized_hash_attribute field_name, hash
           write_attribute field_name, Serializer.dump(hash)
         end
