@@ -7,9 +7,9 @@ describe "Serializer" do
     restored = DocumentRecord::Serializer.load dumped
 
     expect( restored["test"] ).to eq "testing"
-  end 
+  end
 
-  it "uses marshal when forced to use version 0" do 
+  it "uses marshal when forced to use version 0" do
     Marshal.should_receive( :dump ).and_return( "" )
 
     DocumentRecord::Serializer.dump obj, force_version: 0

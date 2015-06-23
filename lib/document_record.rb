@@ -11,13 +11,13 @@ module DocumentRecord
       version = DEFAULT_VERSION
       version = options[:force_version] if options.has_key? :force_version
 
-      binary_dump = 
-        case version 
-          when 0 then 
+      binary_dump =
+        case version
+          when 0 then
             Marshal.dump object
           when 1 then
             object.to_hash.to_bson
-          else 
+          else
             raise "No serialization version found: #{ version }"
         end
 
@@ -36,19 +36,19 @@ module DocumentRecord
         version = decoded[2,2].unpack('S').pop # Gets the Version
         decoded[0...4] = '' # Removes version stamp
       end
-      
+
       case version
         when 0 then
           Marshal.load decoded rescue nil
         when 1 then
           Hash.from_bson( StringIO.new( decoded ) )
-        else 
+        else
           raise "Unrecognized version #{version}"
       end
     end
   end
 
-  module Base 
+  module Base
     extend ActiveSupport::Concern
 
     def document_field name, options = {}
@@ -57,16 +57,35 @@ module DocumentRecord
         alias_method :regular_assign_attributes, :assign_attributes
         alias_method :regular_method_missing, :method_missing
         alias_method :regular_save, :save
+        self.singleton_class.send :alias_method, :regular_find, :find
+
 
         @@_document_field_name = name
         @@_schema_fields = options[:schema_fields] || []
         @@_index_fields ||= []
 
+        @@_select_fields = [ :id ]
+        @@_select_fields << @@_document_field_name
+        @@_select_fields += @@_schema_fields
+
+        default_scope { select( @@_select_fields ) }
+
+        def self.find *args
+          options = args.extract_options!
+          fields = []
+          fields << @@_document_field_name
+          fields += @@_schema_fields
+          options = {select: fields}.merge options
+          args << options
+
+          self.regular_find *args
+        end
+
         def read_serialized_hash_attribute field_name
           raw = read_attribute field_name
           raw && Serializer.load( raw ) || {}
         end
-        
+
         def write_serialized_hash_attribute field_name, hash
           write_attribute field_name, Serializer.dump(hash)
         end
@@ -75,7 +94,7 @@ module DocumentRecord
           @document ||= ::DocumentHash::Core[read_serialized_hash_attribute(@@_document_field_name)].tap do |d|
             d.before_change do |path, value|
               key = path.join "_"
-              
+
               value = case self.class.columns_hash[key].type
                 when :integer then value.to_i
                 else value
@@ -113,11 +132,11 @@ module DocumentRecord
             assign_key = :"#{key}="
             method_missing assign_key, value
             self.send assign_key, value if self.respond_to? assign_key
-          end 
+          end
         end
 
         def method_missing method, *args
-          if method =~ /(.*)=$/ 
+          if method =~ /(.*)=$/
             write_document $1, args.shift
           else
             read_document method.to_s
@@ -150,7 +169,7 @@ module DocumentRecord
 
         def as_json options = {}
           included_fields = super.select{ |k, v|
-            @@_schema_fields.include?( k.to_sym ) 
+            @@_schema_fields.include?( k.to_sym )
           }.stringify_keys!
 
           document.to_hash( stringify_keys: true ).
@@ -159,7 +178,7 @@ module DocumentRecord
         end
 
         def method_values options
-          {}.tap do | result | 
+          {}.tap do | result |
             return result unless options[:methods].is_a? Array
             options[:methods].each do | method |
               result[method] = self.__send__(method)
@@ -174,10 +193,10 @@ module DocumentRecord
 
           hash.each do | k, v |
             current = path.dup
-            
+
             current << k
             if v.is_a? Hash
-              result += _deep_key_values hash[ k ], current 
+              result += _deep_key_values hash[ k ], current
             else
               result += [ current.join("_"), v ]
             end

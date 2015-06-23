@@ -3,6 +3,23 @@ describe SampleModel do
     SampleModel.should be < ActiveRecord::Base
   end
 
+  context "select only the main document when find" do
+    before do
+      SampleModel.create indexed_field: "test"
+    end
+    it "should do the regular find with the restricted fields" do
+      expect( SampleModel ).to receive( :regular_find ).with(:all, { select: [ :object, :created_at, :updated_at ] } )
+
+      SampleModel.find(:all)
+    end
+    it "should do the regular find with the restricted fields" do
+      query = SampleModel.where( indexed_field: "test" ).to_sql
+      expect( query ).to include("object")
+      expect( query ).to include("created_at")
+      expect( query ).to include("updated_at")
+    end
+  end
+
   context "with an arbitrary set of attributes" do
     let(:arbitrary_attributes){ { arbitrary_attribute: 'test' } }
     let(:sample){ SampleModel.new arbitrary_attributes }
@@ -24,10 +41,10 @@ describe SampleModel do
   context "with an arbitrary hash" do
     let(:hash){ { "level1" => {"level2" => 'level3'} } }
     let(:sample){ SampleModel.new hash }
-    
+
     it "returns the previously stored hash when requested" do
       expect( sample.level1 ).to eq :level2 => 'level3'
-    end 
+    end
     it "can be saved" do
       sample.save
     end
@@ -36,7 +53,7 @@ describe SampleModel do
   context "with a hash with multiple items" do
     let(:hash){{ one: {two: :three}, single: :test }}
     let(:sample) { SampleModel.new hash }
-    
+
     it "finds all the hash keys" do
       expect( sample.deep_keys ).to match_array ["one_two", "single"]
     end
@@ -136,14 +153,14 @@ describe SampleModel do
     expect( s1 ).to respond_to( :created_at )
   end
 
-  it "the schema field should come from the indexed info" do 
+  it "the schema field should come from the indexed info" do
     s1 = SampleModel.create "created_at" => 3.days.ago
     s1.update_column( "created_at", 1.day.ago )
 
     expect( s1.created_at ).to eq( s1.read_attribute( :created_at ) )
   end
 
-  it "the schema field should come from the indexed info and reflect in the json" do 
+  it "the schema field should come from the indexed info and reflect in the json" do
     s1 = SampleModel.create "created_at" => 3.days.ago
     s1.update_column( "created_at", 1.day.ago )
 
